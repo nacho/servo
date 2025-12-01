@@ -509,6 +509,8 @@ pub(crate) struct Document {
     image_animation_manager: DomRefCell<ImageAnimationManager>,
     /// The nearest inclusive ancestors to all the nodes that require a restyle.
     dirty_root: MutNullableDom<Element>,
+    /// Last known scroll dimensions for change detection
+    last_scroll_dimensions: RefCell<Option<(i32, i32)>>,
     /// <https://html.spec.whatwg.org/multipage/#will-declaratively-refresh>
     declarative_refresh: DomRefCell<Option<DeclarativeRefresh>>,
     /// <https://drafts.csswg.org/resize-observer/#dom-document-resizeobservers-slot>
@@ -1619,6 +1621,24 @@ impl Document {
         {
             node.dirty(NodeDamage::Other)
         }
+        self.check_body_scroll_dimensions_changed();
+    }
+
+    /// Check if body scroll dimensions have changed and notify embedder
+    pub(crate) fn check_body_scroll_dimensions_changed(&self) {
+        if let Some(body) = self.GetBody() {
+            body.upcast::<Element>().check_scroll_dimensions_changed();
+        }
+    }
+
+    /// Get last known scroll dimensions
+    pub(crate) fn last_scroll_dimensions(&self) -> Option<(i32, i32)> {
+        *self.last_scroll_dimensions.borrow()
+    }
+
+    /// Set last known scroll dimensions
+    pub(crate) fn set_last_scroll_dimensions(&self, width: i32, height: i32) {
+        *self.last_scroll_dimensions.borrow_mut() = Some((width, height));
     }
 
     /// <https://drafts.csswg.org/cssom-view/#document-run-the-scroll-steps>
@@ -3528,6 +3548,7 @@ impl Document {
             animations: Animations::new(),
             image_animation_manager: DomRefCell::new(ImageAnimationManager::default()),
             dirty_root: Default::default(),
+            last_scroll_dimensions: RefCell::new(None),
             declarative_refresh: Default::default(),
             resize_observers: Default::default(),
             fonts: Default::default(),

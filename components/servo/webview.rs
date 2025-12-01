@@ -105,6 +105,10 @@ pub(crate) struct WebViewInner {
 
     /// The current index in the back / forward list.
     back_forward_list_index: usize,
+
+    /// The current document body scroll dimensions.
+    scroll_width: i32,
+    scroll_height: i32,
 }
 
 impl Drop for WebViewInner {
@@ -146,6 +150,8 @@ impl WebView {
             cursor: Cursor::Pointer,
             back_forward_list: Default::default(),
             back_forward_list_index: 0,
+            scroll_width: 0,
+            scroll_height: 0,
         })));
 
         let viewport_details = webview.viewport_details();
@@ -302,6 +308,19 @@ impl WebView {
         }
         self.inner_mut().cursor = new_value;
         self.delegate().notify_cursor_changed(self, new_value);
+    }
+
+    pub(crate) fn set_scroll_dimensions(self, new_width: i32, new_height: i32) {
+        let inner = self.inner();
+        if inner.scroll_width == new_width && inner.scroll_height == new_height {
+            return;
+        }
+        drop(inner);
+        let mut inner_mut = self.inner_mut();
+        inner_mut.scroll_width = new_width;
+        inner_mut.scroll_height = new_height;
+        drop(inner_mut);
+        self.delegate().notify_scroll_changed(self, new_width, new_height);
     }
 
     pub fn focus(&self) {

@@ -16,6 +16,7 @@ use app_units::Au;
 use cssparser::match_ignore_ascii_case;
 use devtools_traits::AttrInfo;
 use dom_struct::dom_struct;
+use embedder_traits::EmbedderMsg;
 use euclid::default::{Rect, Size2D};
 use html5ever::serialize::TraversalScope;
 use html5ever::serialize::TraversalScope::{ChildrenOnly, IncludeNode};
@@ -5551,4 +5552,32 @@ pub(crate) fn cors_setting_for_element(element: &Element) -> Option<CorsSettings
     element
         .get_attribute(&ns!(), &local_name!("crossorigin"))
         .map(|attribute| CorsSettings::from_enumerated_attribute(&attribute.value()))
+}
+
+impl Element {
+    /// Check and notify if scroll dimensions have changed for body element
+    pub fn check_scroll_dimensions_changed(&self) {
+        if let Some(html_element) = self.downcast::<HTMLElement>() {
+            if html_element.is_body_element() {
+                let current_width = self.ScrollWidth();
+                let current_height = self.ScrollHeight();
+                let document = self.upcast::<Node>().owner_doc();
+                
+                // Only send if dimensions actually changed
+                if let Some(last_dimensions) = document.last_scroll_dimensions() {
+                    if last_dimensions.0 == current_width && last_dimensions.1 == current_height {
+                        return;
+                    }
+                }
+                
+                document.set_last_scroll_dimensions(current_width, current_height);
+                let window = document.window();
+                window.send_to_embedder(EmbedderMsg::ScrollChanged(
+                    window.webview_id(),
+                    current_width,
+                    current_height,
+                ));
+            }
+        }
+    }
 }

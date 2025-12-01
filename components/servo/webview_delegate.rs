@@ -662,6 +662,8 @@ pub trait WebViewDelegate {
     /// as a `Vec<Url>` and `_current` denotes the current index in the history. New navigations,
     /// back navigation, and forward navigation modify this index.
     fn notify_history_changed(&self, _webview: WebView, _entries: Vec<Url>, _current: usize) {}
+    /// The document body scroll dimensions have changed.
+    fn notify_scroll_changed(&self, _webview: WebView, _scroll_width: i32, _scroll_height: i32) {}
     /// A history traversal operation is complete.
     fn notify_traversal_complete(&self, _webview: WebView, _: TraversalId) {}
     /// Page content has closed this [`WebView`] via `window.close()`. It's the embedder's

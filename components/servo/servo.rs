@@ -580,6 +580,11 @@ impl Servo {
                         .get_text(webview, StringRequest::from(result_sender));
                 }
             },
+            EmbedderMsg::ScrollChanged(webview_id, scroll_width, scroll_height) => {
+                if let Some(webview) = self.get_webview_handle(webview_id) {
+                    webview.set_scroll_dimensions(scroll_width, scroll_height);
+                }
+            },
             EmbedderMsg::SetClipboardText(webview_id, string) => {
                 if let Some(webview) = self.get_webview_handle(webview_id) {
                     webview.clipboard_delegate().set_text(webview, string);

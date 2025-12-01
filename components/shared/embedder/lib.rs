@@ -589,6 +589,8 @@ pub enum EmbedderMsg {
     SetClipboardText(WebViewId, String),
     /// Changes the cursor.
     SetCursor(WebViewId, Cursor),
+    /// Notifies the embedder that the document body scroll dimensions have changed.
+    ScrollChanged(WebViewId, i32, i32),
     /// A favicon was detected
     NewFavicon(WebViewId, Image),
     /// The history state has changed.
